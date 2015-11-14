@@ -15,8 +15,8 @@ define('RSS_DESP_LENGTH', 256);
 
 function plugin_rss_action()
 {
-	global $vars, $rss_max, $page_title, $whatsnew, $trackback;
-	global $qblog_defaultpage, $qblog_title, $qblog_close;
+	global $vars, $rss_max, $page_title, $whatsnew, $trackback, $username;
+	global $qblog_defaultpage, $qblog_title, $qblog_close, $script;
 	$qm = get_qm();
 	$qt = get_qt();
 
@@ -33,12 +33,13 @@ function plugin_rss_action()
 
 	$lang = LANG;
 	$qblog_mode = FALSE;
+	$qblog_export = FALSE;
 
 	//blogモード
 	if( isset($vars['blog_rss']) && $vars['blog_rss']!='' ){
 		$blog_mode = $vars['blog_rss']; //ブログページ名
 		$qt->setv('blog_rss_mode', true);
-		
+
 		$page_title_utf8 = $page_title.' - '.$blog_mode;
 	}
 	// qblogモード
@@ -52,6 +53,11 @@ function plugin_rss_action()
 		$qblog_mode = TRUE;
 		$blog_mode = FALSE;
 		$page_title_utf8 = mb_convert_encoding($qblog_title, 'UTF-8', SOURCE_ENCODING);
+
+		//全ページ表示
+		if (isset($vars['qblog_export']) && $vars['qblog_export'] === $username) {
+			$qblog_export = TRUE;
+		}
 	}
 	else
 	{
@@ -64,16 +70,20 @@ function plugin_rss_action()
 	// Creating <item>
 	global $ignore_plugin, $strip_plugin, $strip_plugin_inline;
 	$items = $rdf_li = '';
-	
 
 	if ($qblog_mode)
 	{
 		$qblog_recent = CACHEQBLOG_DIR . 'qblog_recent.dat';
 		if (! file_exists($qblog_recent)) die($qm->m['plg_rss']['err_nodata']);
 
-		// ページネーション用のヘッダー行を飛ばす 
-		$lines = file_head($qblog_recent, $rss_max+1);
-		array_shift($lines);
+		if ($qblog_export) {
+			$lines = plugin_rss_qblog_posts();
+		}
+		else {
+			// ページネーション用のヘッダー行を飛ばす
+			$lines = file_head($qblog_recent, $rss_max+1);
+			array_shift($lines);
+		}
 	}
 	else
 	{
@@ -85,7 +95,7 @@ function plugin_rss_action()
 	foreach ($lines as $line)
 	{
 		$skip_list = FALSE;
-		
+
 		if ($qblog_mode)
 		{
 			$page = trim($line);
@@ -100,11 +110,11 @@ function plugin_rss_action()
 		if( $blog_mode && !preg_match('/^'.$blog_mode.'\/.*/', $page) ){
 			continue;
 		}
-		
+
 		$r_page = rawurlencode($page);
 		$title  = get_page_title($page);
 		$source = get_source($page);
-				
+
 		foreach($source as $k => $l)
 		{
 			if (preg_match($ignore_plugin, $l))
@@ -112,7 +122,7 @@ function plugin_rss_action()
 				$skip_list = TRUE;
 				break;
 			}
-			
+
 			if (preg_match($strip_plugin, $l))
 			{	// 説明から省く
 				unset($source[$k]);
@@ -122,30 +132,50 @@ function plugin_rss_action()
 		{
 			continue;
 		}
-		
+
 		//html(noskinを避ける)
 		if( count($source) > 0){
 			$source = str_replace('#html(noskin)', '#html()', $source);
 			$source = preg_replace($strip_plugin_inline, '', $source); // 行内のプラグインを説明から省く
 		}
-		$contents = mb_strimwidth( strip_htmltag( convert_html( $source ) ), 0, RSS_DESP_LENGTH , '...' );
-		$contents = preg_replace_callback('/(&[^;]+;)/', 'plugin_rss_html_entity_decode', $contents);
+
+		// 全文出力
+		if ($qblog_export) {
+			$contents = convert_html($source);
+			$contents = preg_replace(
+				'/<img src="(swfu\/.*?)"/',
+				'<img src="'.h(dirname($script)).'/\1"',
+				$contents
+			);
+		} else {
+			$contents = mb_strimwidth( strip_htmltag( convert_html( $source ) ), 0, RSS_DESP_LENGTH , '...' );
+		}
+		$contents = preg_replace_callback(
+			'/(&[^;]+;)/',
+			'plugin_rss_html_entity_decode', $contents);
 		$contents = plugin_rss_utf8_for_xml($contents);
-		
+
 		switch ($version) {
 		case '0.91': /* FALLTHROUGH */
 		case '2.0':
-			
 			$date = get_date('D, d M Y H:i:s T', $time);
-			$date = ($version == '0.91') ?
-				' <description>' . $date .' -- '. $contents. '</description>' :
-				' <pubDate>'     . $date . '</pubDate>' .
-				' <description>' . $contents . '</description>';
+			if ($version == '0.91') {
+				$date = '';
+				$desc = ' <description>' . $date .' -- '. $contents. '</description>';
+			} else {
+				$date = ' <pubDate>'     . $date . '</pubDate>';
+				if ($qblog_export) {
+					$desc = '<content:encoded><![CDATA['. $contents . ']]></content:encoded>';
+				} else {
+					$desc = ' <description>' . $contents . '</description>';
+				}
+			}
 			$items .= <<<EOD
 <item>
  <title>$title</title>
  <link>$self?$r_page</link>
 $date
+$desc
 </item>
 
 EOD;
@@ -198,7 +228,7 @@ EOD;
 
 	case '2.0':
 		print <<<EOD
-<rss version="{$version}">
+<rss version="{$version}" xmlns:content="http://purl.org/rss/1.0/modules/content/">
  <channel>
   <title>{$page_title_utf8}</title>
   <link>{$self}?{$pagename}</link>
@@ -253,4 +283,20 @@ function plugin_rss_utf8_for_xml($string)
     return preg_replace ('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $string);
 }
 
-?>
+function plugin_rss_qblog_posts()
+{
+	global $qblog_page_prefix, $qblog_page_re;
+
+	$files = glob(DATA_DIR . encode($qblog_page_prefix) . '*');
+
+	$pages = array();
+	foreach ($files as $file)
+	{
+		$pagename = decode(basename($file, '.txt'));
+		if (preg_match($qblog_page_re, $pagename, $mts))
+		{
+			$pages[] = $pagename;
+		}
+	}
+	return $pages;
+}
