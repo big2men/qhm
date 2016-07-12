@@ -34,6 +34,7 @@ function plugin_rss_action()
 	$lang = LANG;
 	$qblog_mode = FALSE;
 	$qblog_export = FALSE;
+	$page_export  = FALSE; // 全ページエクスポート
 
 	//blogモード
 	if( isset($vars['blog_rss']) && $vars['blog_rss']!='' ){
@@ -58,6 +59,11 @@ function plugin_rss_action()
 		if (isset($vars['qblog_export']) && $vars['qblog_export'] === $username) {
 			$qblog_export = TRUE;
 		}
+	}
+	else if (isset($vars['page_export']) && $vars['page_export'] === $username) {
+		$blog_mode = FALSE;
+		$page_export = TRUE;
+		$page_title_utf8 = mb_convert_encoding($page_title, 'UTF-8', SOURCE_ENCODING);
 	}
 	else
 	{
@@ -87,9 +93,19 @@ function plugin_rss_action()
 	}
 	else
 	{
-		$recent = CACHE_DIR . 'recent.dat';
-		if (! file_exists($recent)) die($qm->m['plg_rss']['err_nodata']);
-		$lines = file_head($recent, $rss_max);
+		if ($page_export) {
+			$pages = plugin_rss_get_all_page();
+			$lines = array();
+			foreach ($pages as $_page) {
+				if ( ! preg_match('/\A(:config(\z|\/)|InterWiki|MenuAdmin|QBlog|QHMAdmin|RecentChanges|RecentDeleted)/', $_page)) {
+					$lines[] = "\t$_page";
+				}
+			}
+		} else {
+			$recent = CACHE_DIR . 'recent.dat';
+			if (! file_exists($recent)) die($qm->m['plg_rss']['err_nodata']);
+			$lines = file_head($recent, $rss_max);
+		}
 	}
 
 	foreach ($lines as $line)
@@ -140,7 +156,7 @@ function plugin_rss_action()
 		}
 
 		// 全文出力
-		if ($qblog_export) {
+		if ($qblog_export || $page_export) {
 			$contents = convert_html($source);
 			$contents = preg_replace(
 				'/<img src="(swfu\/.*?)"/',
@@ -158,13 +174,14 @@ function plugin_rss_action()
 		switch ($version) {
 		case '0.91': /* FALLTHROUGH */
 		case '2.0':
+			$wp_post_type = $page_export ? '<wp:post_type>page</wp:post_type>' : '';
 			$date = get_date('D, d M Y H:i:s T', $time);
 			if ($version == '0.91') {
 				$date = '';
 				$desc = ' <description>' . $date .' -- '. $contents. '</description>';
 			} else {
 				$date = ' <pubDate>'     . $date . '</pubDate>';
-				if ($qblog_export) {
+				if ($qblog_export || $page_export) {
 					$desc = '<content:encoded><![CDATA['. $contents . ']]></content:encoded>';
 				} else {
 					$desc = ' <description>' . $contents . '</description>';
@@ -176,6 +193,7 @@ function plugin_rss_action()
  <link>$self?$r_page</link>
 $date
 $desc
+$wp_post_type
 </item>
 
 EOD;
@@ -220,6 +238,10 @@ EOD;
 	$page_title_utf8 = h(plugin_rss_utf8_for_xml($page_title_utf8));
 	$description = h(plugin_rss_utf8_for_xml($description));
 
+	$wxr_definitions = $page_export ? '
+  <wp:wxr_version>1.2</wp:wxr_version>
+' : '';
+
 	switch ($version) {
 	case '0.91':
 		print '<!DOCTYPE rss PUBLIC "-//Netscape Communications//DTD RSS 0.91//EN"' .
@@ -228,12 +250,16 @@ EOD;
 
 	case '2.0':
 		print <<<EOD
-<rss version="{$version}" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="{$version}"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wp="http://wordpress.org/export/1.2/"
+>
  <channel>
   <title>{$page_title_utf8}</title>
   <link>{$self}?{$pagename}</link>
   <description>{$description}</description>
   <language>{$lang}</language>
+  {$wxr_definitions}
 
 {$items}
  </channel>
@@ -299,4 +325,21 @@ function plugin_rss_qblog_posts()
 		}
 	}
 	return $pages;
+}
+
+function plugin_rss_get_all_page($dir = DATA_DIR, $ext = '.txt')
+{
+	$pages = get_existpages($dir, $ext);
+	$qm = get_qm();
+
+	$symbol = ' ';
+	$list = array();
+
+	//並び替える
+	foreach ($pages as $file => $page)
+	{
+		$list[] = $page;
+	}
+
+	return $list;
 }
