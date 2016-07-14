@@ -175,6 +175,10 @@ function plugin_rss_action()
 		case '0.91': /* FALLTHROUGH */
 		case '2.0':
 			$wp_post_type = $page_export ? '<wp:post_type>page</wp:post_type>' : '';
+			$wp_post_type = $qblog_export ? '<wp:post_type>post</wp:post_type>' : $wp_post_type;
+
+			$permalink = "{$self}?{$r_page}";
+			$wp_qhm_permalink = $qblog_export || $page_export ? '<wp:postmeta><wp:meta_key>qhm_permalink</wp:meta_key><wp:meta_value>'.$permalink.'</wp:meta_value></wp:postmeta>' : '';
 			$date = get_date('D, d M Y H:i:s T', $time);
 			if ($version == '0.91') {
 				$date = '';
@@ -190,10 +194,11 @@ function plugin_rss_action()
 			$items .= <<<EOD
 <item>
  <title>$title</title>
- <link>$self?$r_page</link>
+ <link>$permalink</link>
 $date
 $desc
 $wp_post_type
+$wp_qhm_permalink
 </item>
 
 EOD;
@@ -238,7 +243,7 @@ EOD;
 	$page_title_utf8 = h(plugin_rss_utf8_for_xml($page_title_utf8));
 	$description = h(plugin_rss_utf8_for_xml($description));
 
-	$wxr_definitions = $page_export ? '
+	$wxr_definitions = $page_export || $qblog_export ? '
   <wp:wxr_version>1.2</wp:wxr_version>
 ' : '';
 
