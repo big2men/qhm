@@ -177,6 +177,10 @@ function plugin_rss_action()
 			$wp_post_type = $page_export ? '<wp:post_type>page</wp:post_type>' : '';
 			$wp_post_type = $qblog_export ? '<wp:post_type>post</wp:post_type>' : $wp_post_type;
 
+			$post_date = date('Y-m-d H:i:s', $time);
+			$post_date_gmt = gmdate('Y-m-d H:i:s', $time);
+			$wp_post_date = $page_export || $qblog_export ? '<wp:post_date>'.$post_date.'</wp:post_date><wp:post_date_gmt>'.$post_date_gmt.'</wp:post_date_gmt>' : '';
+
 			$permalink = "{$self}?{$r_page}";
 			$wp_qhm_permalink = $qblog_export || $page_export ? '<wp:postmeta><wp:meta_key>qhm_permalink</wp:meta_key><wp:meta_value>'.$permalink.'</wp:meta_value></wp:postmeta>' : '';
 			$date = get_date('D, d M Y H:i:s T', $time);
@@ -198,6 +202,7 @@ function plugin_rss_action()
 $date
 $desc
 $wp_post_type
+$wp_post_date
 $wp_qhm_permalink
 </item>
 
