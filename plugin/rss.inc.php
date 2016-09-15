@@ -379,7 +379,7 @@ function plugin_rss_get_wp_comments($page)
 			continue;
 		}
 
-		$comment_body = $comment['msg'];
+		$comment_body = h($comment['msg']);
 		$comment_body = nl2br($comment_body);
 		$ptns = array(
 			'/(?:https?|ftp)(?::\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)/',
@@ -388,6 +388,7 @@ function plugin_rss_get_wp_comments($page)
 			'<a href="$0">$0</a>'
 		);
 		$comment_body = preg_replace($ptns, $rpls, $comment_body);
+		$comment_body = '<b>' . h($comment['title']) . "</b><br>\n<br>\n" .$comment_body;
 
 		// datetime: 2016.09.15 13:22:43
 		//var_dump($comment);
