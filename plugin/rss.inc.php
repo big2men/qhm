@@ -177,6 +177,11 @@ function plugin_rss_action()
 			$wp_post_type = $page_export ? '<wp:post_type>page</wp:post_type>' : '';
 			$wp_post_type = $qblog_export ? '<wp:post_type>post</wp:post_type>' : $wp_post_type;
 
+			$cat = get_qblog_category($page);
+			$cat_nicename = strtolower(rawurlencode($cat));
+			$wp_category = $qblog_export ? '<category domain="category" nicename="'.$cat_nicename.'"><![CDATA['.$cat.']]></category>': '';
+			$wp_comments = $qblog_export ? plugin_rss_get_wp_comments($page) : '';
+
 			$post_date = date('Y-m-d H:i:s', $time);
 			$post_date_gmt = gmdate('Y-m-d H:i:s', $time);
 			$wp_post_date = $page_export || $qblog_export ? '<wp:post_date>'.$post_date.'</wp:post_date><wp:post_date_gmt>'.$post_date_gmt.'</wp:post_date_gmt>' : '';
@@ -203,6 +208,8 @@ $date
 $desc
 $wp_post_type
 $wp_post_date
+$wp_category
+$wp_comments
 $wp_qhm_permalink
 </item>
 
@@ -352,4 +359,67 @@ function plugin_rss_get_all_page($dir = DATA_DIR, $ext = '.txt')
 	}
 
 	return $list;
+}
+
+function plugin_rss_get_wp_comments($page)
+{
+	$comments = array();
+	if (file_exists(CACHEQBLOG_DIR . encode($page) . '.qbcm.dat')) {
+		$comments = unserialize(file_get_contents(CACHEQBLOG_DIR . encode($page) . '.qbcm.dat'));
+	}
+	else {
+		return '';
+	}
+
+	$xml = '';
+	foreach ($comments as $i => $comment)
+	{
+		if ( ! $comment['show']) {
+			unset($comments[$i]);
+			continue;
+		}
+
+		$comment_body = $comment['msg'];
+		$comment_body = nl2br($comment_body);
+		$ptns = array(
+			'/(?:https?|ftp)(?::\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)/',
+		);
+		$rpls = array(
+			'<a href="$0">$0</a>'
+		);
+		$comment_body = preg_replace($ptns, $rpls, $comment_body);
+
+		// datetime: 2016.09.15 13:22:43
+		//var_dump($comment);
+		$time = mktime(
+			(int)substr($comment['datetime'], 11, 2),
+			(int)substr($comment['datetime'], 14, 2),
+			(int)substr($comment['datetime'], 17, 2),
+			(int)substr($comment['datetime'], 5, 2),
+			(int)substr($comment['datetime'], 8, 2),
+			(int)substr($comment['datetime'], 0, 4)
+		);
+		$date   = date('D, d M Y H:i:s T', $time);
+		$gmdate = gmdate('D, d M Y H:i:s T', $time);
+
+		$xml .= "<wp:comment>\n";
+
+		$xml .= "<wp:comment_author><![CDATA[" . $comment['name'] . "]]></wp:comment_author>\n";
+		$xml .= "<wp:comment_author_email></wp:comment_author_email>\n";
+		$xml .= "<wp:comment_author_url></wp:comment_author_url>\n";
+		$xml .= "<wp:comment_date>" . $date . "</wp:comment_date>\n";
+		$xml .= "<wp:comment_date_gmt>" . $gmdate . "</wp:comment_date_gmt>\n";
+		$xml .= "<wp:comment_content><![CDATA[" . $comment_body . "]]></wp:comment_content>\n";
+		if ($comment['accepted'])
+			$xml .= "<wp:comment_approved>1</wp:comment_approved>\n";
+		else
+			$xml .= "<wp:comment_approved>0</wp:comment_approved>\n";
+		$xml .= "<wp:comment_type></wp:comment_type>\n";
+		$xml .= "<wp:comment_parent>0</wp:comment_parent>\n";
+		$xml .= "<wp:comment_user_id>0</wp:comment_user_id>\n";
+
+		$xml .= "</wp:comment>\n";
+	}
+
+	return $xml;
 }
