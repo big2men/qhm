@@ -400,8 +400,8 @@ function plugin_rss_get_wp_comments($page)
 			(int)substr($comment['datetime'], 8, 2),
 			(int)substr($comment['datetime'], 0, 4)
 		);
-		$date   = date('D, d M Y H:i:s T', $time);
-		$gmdate = gmdate('D, d M Y H:i:s T', $time);
+		$date   = date('Y-m-d H:i:s', $time);
+		$gmdate = gmdate('Y-m-d H:i:s', $time);
 
 		$xml .= "<wp:comment>\n";
 
