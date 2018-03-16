@@ -36,7 +36,7 @@ function remove_data_files {
 # Build Package
 #
 
-QHM_VERSION=$(grep "define('QHM_QHM_VERSION" lib/init.php | cut -d "'" -f 4)
+QHM_VERSION=$(grep "define('QHM_VERSION" lib/init.php | cut -d "'" -f 4)
 echo "Build QHM v$QHM_VERSION's update file."
 
 mkdir tmp
