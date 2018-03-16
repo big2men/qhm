@@ -21,4 +21,4 @@ jobs:
 
       - run: .circleci/build-update-file
       - store_artifacts:
-          path: tmp/update_${QHM_VERSION}.zip
+          path: tmp/build
