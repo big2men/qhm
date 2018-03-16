@@ -36,19 +36,20 @@ function remove_data_files {
 # Build Package
 #
 
-version=$(grep "define('QHM_VERSION" lib/init.php | cut -d "'" -f 4)
-echo "Build QHM v$version's update file."
+QHM_VERSION=$(grep "define('QHM_QHM_VERSION" lib/init.php | cut -d "'" -f 4)
+export QHM_VERSION
+echo "Build QHM v$QHM_VERSION's update file."
 
 mkdir tmp
 
-git archive HEAD --output=tmp/qhm.tar.gz --prefix="tmp/update_$version/"
+git archive HEAD --output=tmp/qhm.tar.gz --prefix="tmp/update_$QHM_VERSION/"
 tar -zxvf tmp/qhm.tar.gz
 
-remove_data_files "tmp/update_$version/"
+remove_data_files "tmp/update_$QHM_VERSION/"
 
 cd tmp
-zip -r "update_$version.zip" "update_$version"
+zip -r "update_$QHM_VERSION.zip" "update_$QHM_VERSION"
 
 echo
-echo "Complete Build QHM v$version's update file."
+echo "Complete Build QHM v$QHM_VERSION's update file."
 echo
