@@ -18,3 +18,7 @@ jobs:
 
     steps:
       - checkout
+
+      - run: .circleci/build-qhm-update
+      - store_artifacts:
+          path: tmp/update.zip
