@@ -44,7 +44,7 @@ mkdir tmp
 git archive HEAD --output=tmp/qhm.tar.gz --prefix="tmp/update/"
 tar -zxvf tmp/qhm.tar.gz
 
-remove_data_files "tmp/update_$QHM_VERSION/"
+remove_data_files "tmp/update_$QHM_VERSION"
 
 cd tmp
 mkdir build
