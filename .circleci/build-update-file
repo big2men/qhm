@@ -41,7 +41,7 @@ echo "Build QHM v$QHM_VERSION's update file."
 
 mkdir tmp
 
-git archive HEAD --output=tmp/qhm.tar.gz --prefix="tmp/update/"
+git archive HEAD --output=tmp/qhm.tar.gz --prefix="tmp/update_$QHM_VERSION/"
 tar -zxvf tmp/qhm.tar.gz
 
 remove_data_files "tmp/update_$QHM_VERSION"
