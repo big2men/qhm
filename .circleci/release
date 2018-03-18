@@ -1,7 +1,5 @@
 # !/bin/bash
 
-GITHUB_TOKEN
-
 ###############################
 #
 # Release Tag to GitHub
