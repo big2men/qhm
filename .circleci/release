@@ -11,7 +11,7 @@ GITHUB_USER="big2men"
 GITHUB_REPO="qhm"
 
 # create release
-github-release release \
+github-release edit \
   --user $GITHUB_USER \
   --repo $GITHUB_REPO \
   --tag "v$VERSION" \
