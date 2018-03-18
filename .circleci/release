@@ -34,5 +34,7 @@ github-release upload \
   --user $GITHUB_USER \
   --repo $GITHUB_REPO \
   --tag "v$VERSION" \
+  --label "更新ファイル" \
   --name "qhm-${VERSION}_update.zip" \
-  --file "tmp/build/update_$VERSION.zip"
+  --file "tmp/build/update_$VERSION.zip" \
+  --replace
