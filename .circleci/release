@@ -10,8 +10,19 @@ VERSION=$(grep "define('QHM_VERSION" lib/init.php | cut -d "'" -f 4)
 GITHUB_USER="big2men"
 GITHUB_REPO="qhm"
 
+# tag
+github-release info \
+  --user $GITHUB_USER \
+  --repo $GITHUB_REPO \
+  --tag "v$VERSION"
+if [ $? = 1 ]; then
+  subcommand=release
+else
+  subcommand=edit
+fi
+
 # create release
-github-release edit \
+github-release $subcommand \
   --user $GITHUB_USER \
   --repo $GITHUB_REPO \
   --tag "v$VERSION" \
