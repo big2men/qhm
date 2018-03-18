@@ -20,8 +20,8 @@ github-release edit \
 
 # upload files
 github-release upload \
-  --user $GITHUB_USER
-  --repo $GITHUB_REPO
-  --tag "v$VERSION"
-  --name "qhm-${VERSION}_update"
+  --user $GITHUB_USER \
+  --repo $GITHUB_REPO \
+  --tag "v$VERSION" \
+  --name "qhm-${VERSION}_update" \
   --file "tmp/build/update_$VERSION.zip"
