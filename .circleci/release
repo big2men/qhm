@@ -27,7 +27,7 @@ github-release $subcommand \
   --repo $GITHUB_REPO \
   --tag "v$VERSION" \
   --name "v$VERSION" \
-  --description "Release"
+  --description "手動更新には「更新ファイル」をダウンロードしてご利用ください。"
 
 # upload files
 github-release upload \
