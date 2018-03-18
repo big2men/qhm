@@ -26,10 +26,13 @@ workflows:
   version: 2
   build-and-release:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /.*/
       - release:
-        requires:
-          - build
-        filters:
-          branches:
-            only: feature/circleci
+          requires:
+            - build
+          filters:
+            branches:
+              only: feature/circleci
