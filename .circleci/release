@@ -1,0 +1,29 @@
+# !/bin/bash
+
+GITHUB_TOKEN
+
+###############################
+#
+# Release Tag to GitHub
+#
+###############################
+
+VERSION=$(grep "define('QHM_VERSION" lib/init.php | cut -d "'" -f 4)
+GITHUB_USER="big2men"
+GITHUB_REPO="qhm"
+
+# create release
+github-release release \
+  --user $GITHUB_USER \
+  --repo $GITHUB_REPO \
+  --tag "v$VERSION" \
+  --name "v$VERSION" \
+  --description "Release"
+
+# upload files
+github-release upload \
+  --user $GITHUB_USER
+  --repo $GITHUB_REPO
+  --tag "v$VERSION"
+  --name "qhm-${VERSION}_update"
+  --file "tmp/build/update_$VERSION.zip"
