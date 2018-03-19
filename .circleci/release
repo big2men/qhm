@@ -10,8 +10,8 @@ VERSION=$(grep "define('QHM_VERSION" lib/init.php | cut -d "'" -f 4)
 
 # tag
 github-release info \
-  --user $CIRCLE_PR_USERNAME \
-  --repo $CIRCLE_PR_REPONAME \
+  --user $CIRCLE_PROJECT_USERNAME \
+  --repo $CIRCLE_PROJECT_REPONAME \
   --tag "v$VERSION"
 if [ $? = 1 ]; then
   subcommand=release
@@ -21,16 +21,16 @@ fi
 
 # create release
 github-release $subcommand \
-  --user $CIRCLE_PR_USERNAME \
-  --repo $CIRCLE_PR_REPONAME \
+  --user $CIRCLE_PROJECT_USERNAME \
+  --repo $CIRCLE_PROJECT_REPONAME \
   --tag "v$VERSION" \
   --name "v$VERSION" \
   --description "手動更新には「更新ファイル」をダウンロードしてご利用ください。"
 
 # upload files
 github-release upload \
-  --user $CIRCLE_PR_USERNAME \
-  --repo $CIRCLE_PR_REPONAME \
+  --user $CIRCLE_PROJECT_USERNAME \
+  --repo $CIRCLE_PROJECT_REPONAME \
   --tag "v$VERSION" \
   --label "更新ファイル" \
   --name "qhm-${VERSION}_update.zip" \
